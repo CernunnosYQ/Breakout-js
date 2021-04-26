@@ -1,0 +1,39 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.imposter {
+    width: 100vw;
+    height: 100vh;
+
+    background: #333;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.board {
+    width: 960px;
+    height: 540px;
+
+    position: relative;
+
+    background: #ddd;
+    box-shadow: 0 0 12px #1f1f1f;
+}
+
+.board:focus {
+    background: skyblue;
+}
+
+.player {
+    position: absolute;
+
+    background: orchid;
+    border-radius: 4px;
+
+    transition: all .3s;
+}

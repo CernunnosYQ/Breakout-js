@@ -16,16 +16,13 @@
 }
 
 .board {
-    width: 960px;
-    height: 540px;
-
     position: relative;
 
     background: #ddd;
     box-shadow: 0 0 12px #1f1f1f;
 }
 
-.board:focus {
+.ready {
     background: skyblue;
 }
 

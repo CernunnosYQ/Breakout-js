@@ -18,19 +18,57 @@
 .board {
     position: relative;
 
-    background: #ddd;
+    background: #2f2f2f;
     box-shadow: 0 0 12px #1f1f1f;
 }
 
 .ready {
-    background: skyblue;
+    background: #2f2f2f;
 }
 
 .player {
     position: absolute;
 
-    background: orchid;
+    background: #E0E0E0;
     border-radius: 4px;
 
     transition: all .3s;
+}
+
+.ball {
+    position: absolute;
+
+    background: #e0e0e0;
+    border-radius: 50%;
+}
+
+.block {
+    position: absolute;
+
+    transform: scaleX(0.95) scaleY(0.90);
+    transition: all .3s;
+}
+
+.red {
+    background: #E57373;
+}
+
+.green {
+    background: #AED581;
+}
+
+.blue {
+    background: #4FC3F7;
+}
+
+.yellow {
+    background: #FFF176;
+}
+
+.orange {
+    background: #FF8A65;
+}
+
+.purple {
+    background: #BA68C8;
 }

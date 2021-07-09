@@ -68,15 +68,36 @@ class Game {
   update() {
     this.player.updatePos();
     this.ball.updatePos();
-    this.detectColision();
+    this.detectCollision();
   }
 
-  detectColision() {
+  detectCollision() {
     let ball_pos = this.ball.getBounds();
+
+    if (ball_pos['bottom'] >= board_height - Math.abs(this.ball.velocity_y)) {
+      this.pauseGame();
+      console.log('Game Over');
+    }
+
+    this.detectBorderCollision(ball_pos);
+    this.detectPlayerCollision(ball_pos);
+    this.detectBlockCollision(ball_pos);
+  }
+
+  detectBorderCollision(ball_pos) {
+    if (ball_pos['right'] >= board_width - Math.abs(this.ball.velocity_x) ||
+        ball_pos['left'] <= Math.abs(this.ball.velocity_x)) {
+      this.ball.turnX();
+    }
+
+    if (ball_pos['top'] <= Math.abs(this.ball.velocity_y)) {
+      this.ball.turnY();
+    }
+  }
+
+  detectPlayerCollision(ball_pos) {
     let ball_last_pos = this.ball.getLastBounds();
     let player_pos = this.player.getBounds();
-
-    console.log(`${ball_pos['bottom'] <= player_pos['top']} --- ${ball_pos['right'] >= player_pos['left']} --- ${ball_pos['left'] <= player_pos['right']} --- ${ball_pos['top'] >= player_pos['bottom']}`)
 
     if (ball_pos['bottom'] >= player_pos['top'] && ball_pos['right'] >= player_pos['left'] &&
         ball_pos['left'] <= player_pos['right'] && ball_pos['top'] <= player_pos['bottom']) {
@@ -85,14 +106,22 @@ class Game {
         this.ball.turnX();
       }
     }
+  }
 
-    if (ball_pos['right'] >= board_width - Math.abs(this.ball.velocity_x) ||
-        ball_pos['left'] <= Math.abs(this.ball.velocity_x)) {
-      this.ball.turnX();
-    }
+  detectBlockCollision(ball_pos) {
+    for (let i = 0; i < this.blocks.length; i++) {
+      let ball_last_pos = this.ball.getLastBounds();
+      let block_pos = this.blocks[i].getBounds();
+      if (ball_pos['bottom'] >= block_pos['top'] && ball_pos['right'] >= block_pos['left'] &&
+          ball_pos['left'] <= block_pos['right'] && ball_pos['top'] <= block_pos['bottom']) {
+        this.ball.turnY();
+        if (ball_last_pos['right'] <= block_pos['left'] || ball_last_pos['left'] >= block_pos['right']) {
+          this.ball.turnX();
+        }
 
-    if (ball_pos['bottom'] >= board_height - Math.abs(this.ball.velocity_y) || ball_pos['top'] <= Math.abs(this.ball.velocity_y)) {
-      this.ball.turnY();
+        this.board.removeChild(this.blocks[i].element);
+        this.blocks.splice(i, 1);
+      }
     }
   }
   

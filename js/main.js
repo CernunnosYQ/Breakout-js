@@ -1,8 +1,8 @@
 const board_width = window.innerWidth;
 const board_height = window.innerHeight;
 
-const block_columns = 12;
-const block_rows = 8;
+const block_columns = 8;
+const block_rows = 5;
 
 const block_width = board_width / block_columns;
 const block_height = board_height / (block_rows * 3);
@@ -16,6 +16,66 @@ const fps_target = 25;
 
 let colors = ['red', 'green', 'blue', 'yellow', 'orange', 'purple']
 let last_color = ''
+
+class Collider {
+  // Detecta la colisión entre un objeto fijo y un objeto movil. Devuelve none, x, y o both
+  static collides(fixed, mobile_actual, mobile_last, velocity) {
+    if (fixed['top'] <= mobile_actual['bottom'] && fixed['bottom'] >= mobile_actual['top'] &&
+        fixed['left'] <= mobile_actual['right'] && fixed['right'] >= mobile_actual['left']) {
+      if (fixed['left'] <= mobile_last['right'] && fixed['right'] >= mobile_last['left']) {
+        return 'y'
+      } else if (fixed['top'] <= mobile_last['bottom'] && fixed['bottom'] >= mobile_last['top']) {
+        return 'x'
+      } else {
+        let m_velocity = abs(velocity[1]) / abs(velocity[0])
+        let m_tl = abs(mobile_actual['top'] - mobile_last['top']) / abs(mobile_actual['left'] - mobile_last['left'])
+        let m_tr = abs(mobile_actual['top'] - mobile_last['top']) / abs(mobile_actual['right'] - mobile_last['right'])
+        let m_bl = abs(mobile_actual['bottom'] - mobile_last['bottom']) / abs(mobile_actual['left'] - mobile_last['left'])
+        let m_br = abs(mobile_actual['bottom'] - mobile_last['bottom']) / abs(mobile_actual['right'] - mobile_last['right'])
+
+        if (mobile_last['bottom'] <= fixed['top']) {
+          if (mobile_last['right'] <= fixed['left']) {
+            if (m_velocity == m_tl) {
+              return 'both';
+            } else if (m_tl < m_velocity) {
+              return 'x';
+            } else if (m_tl > m_velocity) {
+              return 'y';
+            }
+          } else if (mobile_last['left'] >= fixed['right']) {
+            if (m_velocity == m_tr) {
+              return 'both';
+            } else if (m_tr < m_velocity) {
+              return 'x';
+            } else if (m_tr > m_velocity) {
+              return 'y';
+            }
+          }
+        } else if (mobile_last['top'] >= fixed['bottom']) {
+          if (mobile_last['right'] <= fixed['left']) {
+            if (m_velocity == m_bl) {
+              return 'both';
+            } else if (m_bl < m_velocity) {
+              return 'x';
+            } else if (m_bl > m_velocity) {
+              return 'y';
+            }
+          } else if (mobile_last['left'] >= fixed['right']) {
+            if (m_velocity == m_br) {
+              return 'both';
+            } else if (m_br < m_velocity) {
+              return 'x';
+            } else if (m_br > m_velocity) {
+              return 'y';
+            }
+          }
+        }
+      }
+    }
+    return 'none'
+    //ball_pos['bottom'] >= block_pos['top'] || block_pos['bottom'] >= ball_pos['top']
+  }
+}
 
 class Game {
   constructor(container) {
@@ -99,28 +159,57 @@ class Game {
     let ball_last_pos = this.ball.getLastBounds();
     let player_pos = this.player.getBounds();
 
-    if (ball_pos['bottom'] >= player_pos['top'] && ball_pos['right'] >= player_pos['left'] &&
-        ball_pos['left'] <= player_pos['right'] && ball_pos['top'] <= player_pos['bottom']) {
-      this.ball.turnY();
-      if (ball_last_pos['right'] <= player_pos['left'] || ball_last_pos['left'] >= player_pos['right']) {
+    let collide = Collider.collides(player_pos, ball_pos, ball_last_pos, [this.ball.velocity_x, this.ball.velocity_y]);
+
+    switch (collide) {
+      case 'none':
+        break
+      case 'x':
         this.ball.turnX();
-      }
+        break
+      case 'y':
+        this.ball.turnY();
+        break
+      case 'both':
+        this.ball.turnX();
+        this.ball.turnX();
+        break
+      default:
+        break
     }
   }
 
   detectBlockCollision(ball_pos) {
+    let found_collision = false
+
     for (let i = 0; i < this.blocks.length; i++) {
-      let ball_last_pos = this.ball.getLastBounds();
-      let block_pos = this.blocks[i].getBounds();
-      if (ball_pos['bottom'] >= block_pos['top'] && ball_pos['right'] >= block_pos['left'] &&
-          ball_pos['left'] <= block_pos['right'] && ball_pos['top'] <= block_pos['bottom']) {
-        this.ball.turnY();
-        if (ball_last_pos['right'] <= block_pos['left'] || ball_last_pos['left'] >= block_pos['right']) {
-          this.ball.turnX();
+      if (!found_collision) {
+        let ball_last_pos = this.ball.getLastBounds();
+        let block_pos = this.blocks[i].getBounds();
+
+        let collide = Collider.collides(block_pos, ball_pos, ball_last_pos, [this.ball.velocity_x, this.ball.velocity_y]);
+
+        switch (collide) {
+          case 'none':
+            break
+          case 'x':
+            this.ball.turnX();
+            break
+          case 'y':
+            this.ball.turnY();
+            break
+          case 'both':
+            this.ball.turnX();
+            this.ball.turnX();
+            break
+          default:
+            break
         }
 
-        this.board.removeChild(this.blocks[i].element);
-        this.blocks.splice(i, 1);
+        if (collide != 'none') {
+          this.board.removeChild(this.blocks[i].element);
+          this.blocks.splice(i, 1);
+        }
       }
     }
   }
@@ -291,10 +380,22 @@ class Ball {
 
   turnX () {
     this.velocity_x = - this.velocity_x;
+    this.velocity_x *= 1.01;
+    this.velocity_y *= 1.01;
   }
 
-  turnY () {
+  turnY (added_velocity=0, right=false, left=false) {
     this.velocity_y = - this.velocity_y;
+    this.velocity_x *= 1.01;
+    this.velocity_y *= 1.01;
+
+    if (right && !left) {
+      this.velocity_x += Math.abs(added_velocity/2)
+    }
+
+    if (left && !right) {
+      this.velocity_x -= Math.abs(added_velocity/2)
+    }
   }
 
   getBounds() {

@@ -27,12 +27,6 @@ class Collider {
       } else if (fixed['top'] <= mobile_last['bottom'] && fixed['bottom'] >= mobile_last['top']) {
         return 'x'
       } else {
-        let m_velocity = Math.abs(velocity[1]) / Math.abs(velocity[0])
-        let m_tl = Math.abs(mobile_actual['top'] - mobile_last['top']) / Math.abs(mobile_actual['left'] - mobile_last['left'])
-        let m_tr = Math.abs(mobile_actual['top'] - mobile_last['top']) / Math.abs(mobile_actual['right'] - mobile_last['right'])
-        let m_bl = Math.abs(mobile_actual['bottom'] - mobile_last['bottom']) / Math.abs(mobile_actual['left'] - mobile_last['left'])
-        let m_br = Math.abs(mobile_actual['bottom'] - mobile_last['bottom']) / Math.abs(mobile_actual['right'] - mobile_last['right'])
-
         if (mobile_last['bottom'] <= fixed['top']) {
           if (mobile_last['right'] <= fixed['left']) {
             return 'both';
@@ -52,6 +46,26 @@ class Collider {
   }
 }
 
+class Sounds {
+  constructor () {
+    this.sounds = {}
+  }
+
+  newSound(id, source) {
+    this.sounds[id] = document.createElement('audio');
+    this.sounds[id].src = source;
+    this.sounds[id].setAttribute('preload', 'auto');
+    this.sounds[id].setAttribute('controls', 'none');
+    this.sounds[id].classList.add('hidden');
+    container.appendChild(this.sounds[id]);
+  }
+
+  playSound(id) {
+    console.log('Reproducir sonido');
+    this.sounds[id].play();
+  }
+}
+
 class Game {
   constructor(container) {
     this.container = container;
@@ -65,6 +79,10 @@ class Game {
     this.board.classList.add('board');
     this.board.style.width = `${board_width}px`;
     this.board.style.height = `${board_height}px`;
+
+    this.sounds = new Sounds();
+    this.sounds.newSound('collide', '../res/click 6.mp3');
+    this.sounds.newSound('bell', '../res/bell.mp3');
 
     this.setControls();
   }
@@ -108,10 +126,6 @@ class Game {
     this.ball = new Ball((board_width - block_height) / 2, (board_height - block_height) / 2);
     this.board.appendChild(this.ball.element);
   }
-
-  loadSound() {
-    
-  }
   
   update() {
     this.player.updatePos();
@@ -133,13 +147,17 @@ class Game {
   }
 
   detectBorderCollision(ball_pos) {
+    let collides = false
+
     if (ball_pos['right'] >= board_width - Math.abs(this.ball.velocity_x) ||
         ball_pos['left'] <= Math.abs(this.ball.velocity_x)) {
       this.ball.turnX();
+      this.sounds.playSound('collide');
     }
 
     if (ball_pos['top'] <= Math.abs(this.ball.velocity_y)) {
       this.ball.turnY();
+      this.sounds.playSound('collide');
     }
   }
 
@@ -164,6 +182,11 @@ class Game {
         break
       default:
         break
+    }
+
+    if (collide != 'none') {
+      console.log(`${collide} is not none`)
+      this.sounds.playSound('collide');
     }
   }
 
@@ -198,6 +221,7 @@ class Game {
           this.board.removeChild(this.blocks[i].element);
           this.blocks.splice(i, 1);
           found_collision = true;
+          this.sounds.playSound('collide');
         }
       }
     }

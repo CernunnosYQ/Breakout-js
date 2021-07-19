@@ -1,7 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+
+    font-family: 'Press Start 2P', cursive;
 }
 
 .imposter {
@@ -47,6 +51,19 @@
 
     transform: scaleX(0.95) scaleY(0.90);
     transition: all .3s;
+}
+
+.menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    background: #2f2f2f;
+    opacity: 80%;
+}
+
+.hidden {
+    display: none;
 }
 
 .red {

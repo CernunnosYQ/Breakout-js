@@ -27,64 +27,46 @@ class Collider {
       } else if (fixed['top'] <= mobile_last['bottom'] && fixed['bottom'] >= mobile_last['top']) {
         return 'x'
       } else {
-        let m_velocity = abs(velocity[1]) / abs(velocity[0])
-        let m_tl = abs(mobile_actual['top'] - mobile_last['top']) / abs(mobile_actual['left'] - mobile_last['left'])
-        let m_tr = abs(mobile_actual['top'] - mobile_last['top']) / abs(mobile_actual['right'] - mobile_last['right'])
-        let m_bl = abs(mobile_actual['bottom'] - mobile_last['bottom']) / abs(mobile_actual['left'] - mobile_last['left'])
-        let m_br = abs(mobile_actual['bottom'] - mobile_last['bottom']) / abs(mobile_actual['right'] - mobile_last['right'])
+        let m_velocity = Math.abs(velocity[1]) / Math.abs(velocity[0])
+        let m_tl = Math.abs(mobile_actual['top'] - mobile_last['top']) / Math.abs(mobile_actual['left'] - mobile_last['left'])
+        let m_tr = Math.abs(mobile_actual['top'] - mobile_last['top']) / Math.abs(mobile_actual['right'] - mobile_last['right'])
+        let m_bl = Math.abs(mobile_actual['bottom'] - mobile_last['bottom']) / Math.abs(mobile_actual['left'] - mobile_last['left'])
+        let m_br = Math.abs(mobile_actual['bottom'] - mobile_last['bottom']) / Math.abs(mobile_actual['right'] - mobile_last['right'])
 
         if (mobile_last['bottom'] <= fixed['top']) {
           if (mobile_last['right'] <= fixed['left']) {
-            if (m_velocity == m_tl) {
-              return 'both';
-            } else if (m_tl < m_velocity) {
-              return 'x';
-            } else if (m_tl > m_velocity) {
-              return 'y';
-            }
+            return 'both';
           } else if (mobile_last['left'] >= fixed['right']) {
-            if (m_velocity == m_tr) {
-              return 'both';
-            } else if (m_tr < m_velocity) {
-              return 'x';
-            } else if (m_tr > m_velocity) {
-              return 'y';
-            }
+            return 'both';
           }
         } else if (mobile_last['top'] >= fixed['bottom']) {
           if (mobile_last['right'] <= fixed['left']) {
-            if (m_velocity == m_bl) {
-              return 'both';
-            } else if (m_bl < m_velocity) {
-              return 'x';
-            } else if (m_bl > m_velocity) {
-              return 'y';
-            }
+            return 'both';
           } else if (mobile_last['left'] >= fixed['right']) {
-            if (m_velocity == m_br) {
-              return 'both';
-            } else if (m_br < m_velocity) {
-              return 'x';
-            } else if (m_br > m_velocity) {
-              return 'y';
-            }
+            return 'both';
           }
         }
       }
     }
     return 'none'
-    //ball_pos['bottom'] >= block_pos['top'] || block_pos['bottom'] >= ball_pos['top']
   }
 }
 
 class Game {
   constructor(container) {
     this.container = container;
+    this.in_game = false;
+    this.menu = document.createElement('div');
+    let menu_text = document.createElement('h1');
+    this.menu.appendChild(menu_text);
+    this.menu.classList.add('menu', 'imposter');
     
     this.board = document.createElement('div');
     this.board.classList.add('board');
     this.board.style.width = `${board_width}px`;
     this.board.style.height = `${board_height}px`;
+
+    this.setControls();
   }
   
   initialize() {
@@ -94,9 +76,11 @@ class Game {
     
     this.board.appendChild(this.player.element);
     this.container.appendChild(this.board);
-    this.setControls(this.player);
     this.createBlocks();
     this.createBall();
+
+    this.container.appendChild(this.menu);
+    this.menu.firstChild.innerText = 'Press space to start';
   }
   
   setControls() {
@@ -124,6 +108,10 @@ class Game {
     this.ball = new Ball((board_width - block_height) / 2, (board_height - block_height) / 2);
     this.board.appendChild(this.ball.element);
   }
+
+  loadSound() {
+    
+  }
   
   update() {
     this.player.updatePos();
@@ -135,7 +123,7 @@ class Game {
     let ball_pos = this.ball.getBounds();
 
     if (ball_pos['bottom'] >= board_height - Math.abs(this.ball.velocity_y)) {
-      this.pauseGame();
+      this.gameOver();
       console.log('Game Over');
     }
 
@@ -209,23 +197,34 @@ class Game {
         if (collide != 'none') {
           this.board.removeChild(this.blocks[i].element);
           this.blocks.splice(i, 1);
+          found_collision = true;
         }
       }
     }
   }
   
   pauseGame() {
+    if (!this.in_game) {
+      this.menu.classList.add('hidden');
+      this.menu.firstChild.innerText = 'Game paused';
+    }
+
     if (this.paused) {
       this.loop = window.setInterval(() => { this.update() }, 1000/fps_target);
+      this.menu.classList.add('hidden');
       this.paused = false;
     } else {
       clearInterval(this.loop);
+      this.menu.classList.remove('hidden');
       this.paused = true;
     }
   }
   
-  unloadContent() {
-    console.log('Descargando datos de juego');
+  gameOver() {
+    this.pauseGame();
+    this.board.innerHTML = '';
+    this.container.innerHTML = '';
+    this.initialize();
   }
   
   keyPressed(key) {
@@ -384,18 +383,10 @@ class Ball {
     this.velocity_y *= 1.01;
   }
 
-  turnY (added_velocity=0, right=false, left=false) {
+  turnY () {
     this.velocity_y = - this.velocity_y;
     this.velocity_x *= 1.01;
     this.velocity_y *= 1.01;
-
-    if (right && !left) {
-      this.velocity_x += Math.abs(added_velocity/2)
-    }
-
-    if (left && !right) {
-      this.velocity_x -= Math.abs(added_velocity/2)
-    }
   }
 
   getBounds() {
